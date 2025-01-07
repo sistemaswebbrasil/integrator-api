@@ -23,7 +23,7 @@ jobs:
       
       - name: Build com Maven
         env:
-          SPRING_PROFILES_ACTIVE: test      
+          SPRING_PROFILES_ACTIVE: test
         run: mvn -B package --file pom.xml
       
       - name: Criando o diretório para o Build do JAR
@@ -40,7 +40,7 @@ jobs:
         run: echo "O nome do arquivo JAR é ${{ steps.jar_name.outputs.jar_name }}"
       
       - name: Enviando os JAR por FTP
-        uses: SamKirkland/FTP-Deploy-Action@4.0.0
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.HOST }}
           username: ${{ secrets.USUARIOCPANEL }}
