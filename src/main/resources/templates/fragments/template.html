@@ -31,6 +31,9 @@
                         <li class="nav-item">
                             <a class="nav-link" th:classappend="${cleanPath == '/about' ? 'active' : ''}" th:href="@{/about}">About</a>
                         </li>
+                        <li class="nav-item"></li>
+                            <a class="nav-link" th:classappend="${cleanPath == '/swagger-ui/index.html' ? 'active' : ''}" th:href="@{/swagger-ui/index.html}">API Docs</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -39,7 +42,7 @@
 <h1>teste</h1>
     <footer th:fragment="footer" class="footer mt-auto py-3 bg-dark">
         <div class="container text-center">
-            <span class="text-muted">Place sticky footer content here.</span>
+            <span class="text-light">Place sticky footer content here.</span>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     </footer>

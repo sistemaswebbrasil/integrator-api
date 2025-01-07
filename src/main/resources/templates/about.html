@@ -6,9 +6,70 @@
 
     <main class="container mt-5">
         <div class="row">
-            <div class="col-md-12 text-center">
-                <h1>About Us</h1>
-                <p class="lead">This is the about page of our application.</p>
+            <div class="col-md-12 text-center mb-4">
+                <h1>About Our API</h1>
+                <p class="lead">A RESTful API for task management</p>
+            </div>
+            
+            <div class="col-md-8 offset-md-2">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h2 class="card-title">Overview</h2>
+                        <p class="card-text">
+                            This API provides endpoints for managing tasks in a simple and efficient way. 
+                            Built with Spring Boot, it offers full CRUD operations with data persistence using MySQL.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h2 class="card-title">Available Endpoints</h2>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Method</th>
+                                        <th>Endpoint</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge bg-success">GET</span></td>
+                                        <td>/api/tasks</td>
+                                        <td>List all tasks</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-info">POST</span></td>
+                                        <td>/api/tasks</td>
+                                        <td>Create a new task</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-warning">PUT</span></td>
+                                        <td>/api/tasks/{id}</td>
+                                        <td>Update an existing task</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-danger">DELETE</span></td>
+                                        <td>/api/tasks/{id}</td>
+                                        <td>Delete a task</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h2 class="card-title">Documentation</h2>
+                        <p class="card-text">
+                            For detailed API documentation, please visit our 
+                            <a href="/integrator-api/swagger-ui.html" class="btn btn-primary">Swagger UI</a>
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
