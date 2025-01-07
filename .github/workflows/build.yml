@@ -22,6 +22,8 @@ jobs:
           distribution: 'adopt'
       
       - name: Build com Maven
+        env:
+          SPRING_PROFILES_ACTIVE: test      
         run: mvn -B package --file pom.xml
       
       - name: Criando o diretório para o Build do JAR
