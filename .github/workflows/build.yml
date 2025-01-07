@@ -20,14 +20,18 @@ jobs:
           java-version: '21'
 
       - name: Build with Maven
+        env:
+          SPRING_PROFILES_ACTIVE: test
         run: mvn clean install
 
       - name: Run tests
+        env:
+          SPRING_PROFILES_ACTIVE: test
         run: mvn test
 
       - name: Deploy to Server
         env:
-          SPRING_PROFILES_ACTIVE: 'prod'
+          SPRING_PROFILES_ACTIVE: 'default'
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_PATH: ${{ secrets.SERVER_PATH }}
