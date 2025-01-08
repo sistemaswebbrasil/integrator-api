@@ -28,4 +28,11 @@ public class HomeController {
         model.addAttribute("cleanPath", getCleanPath(request));
         return "about";
     }
+
+    @GetMapping("/doc")
+    public String doc(Model model, HttpServletRequest request) {
+        model.addAttribute("currentPage", "doc");
+        model.addAttribute("cleanPath", getCleanPath(request));
+        return "doc";
+    }
 }
