@@ -1,5 +1,7 @@
 package br.com.siswbrasil.integrator.config;
 
+import static org.springframework.security.config.Customizer.*;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,22 +21,25 @@ public class SecurityConfig {
     private String issuer;
 
     private static final String[] PERMITTED_URLS = {
-        "/",
-        "/about",
-        "/doc",
-        "/swagger-ui/**",
-        "/v3/api-docs/**",
-        "/root",
-        "api-docs/**",
-        "/swagger-ui.html",
-        "/webjars/**"
+            "/",
+            "/about",
+            "/doc",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/root",
+            "api-docs/**",
+            "/swagger-ui.html",
+            "/webjars/**"
     };
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth -> auth                
-                .requestMatchers(PERMITTED_URLS).permitAll()
-                .anyRequest().authenticated())
+        http
+                .csrf(csrf -> csrf.disable()) 
+                .cors(withDefaults())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PERMITTED_URLS).permitAll()
+                        .anyRequest().authenticated())
                 .oauth2ResourceServer(server -> server
                         .jwt(jwt -> jwt
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())));
