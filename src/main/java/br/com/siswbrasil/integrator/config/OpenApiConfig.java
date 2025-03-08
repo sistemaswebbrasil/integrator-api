@@ -27,7 +27,7 @@ public class OpenApiConfig {
                                         .description("Enter the access_token (not id_token) from Auth0 response")))
                 .info(new Info()
                         .title("Integrator API")
-                        .description("Use access_token for API authentication")
+                        .description("Use access_token for API authentication. Includes Auth0 user management.")
                         .version("1.0"))
                 .addSecurityItem(new SecurityRequirement()
                         .addList("bearer-key"));
