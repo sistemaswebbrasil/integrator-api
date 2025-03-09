@@ -31,9 +31,15 @@ jobs:
       
       - name: Copiando JAR gerado para a pasta jar-upload
         run: |
-          cp ./target/*-runner.jar ./jar-upload/
-          cp -r ./target/lib ./jar-upload/ || true
-          cp -r ./target/quarkus-app ./jar-upload/ || true
+          echo "Conteúdo do diretório target:"
+          ls -la ./target/
+          
+          # Copiar todos os JARs (exceto os JAR de documentação e fontes)
+          cp $(find ./target -name "*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar") ./jar-upload/ || echo "Nenhum JAR encontrado"
+          
+          # Para verificação
+          echo "Arquivos copiados para jar-upload:"
+          ls -la ./jar-upload/
       
       - name: Criar application.properties para produção
         run: |
@@ -73,12 +79,21 @@ jobs:
           #!/bin/bash
           
           APP_NAME="integrator-quarkus"
-          QUARKUS_RUNNER=$(find . -name "*-runner.jar" | head -1)
+          
+          # Encontrar o arquivo JAR principal (ignorando libs)
+          MAIN_JAR=$(find . -maxdepth 1 -name "*.jar" | head -1)
+          
+          if [ -z "$MAIN_JAR" ]; then
+            echo "Erro: Nenhum arquivo JAR encontrado no diretório atual!"
+            exit 1
+          fi
+          
+          echo "Usando JAR: $MAIN_JAR"
           
           case "$1" in
             start)
               echo "Iniciando $APP_NAME..."
-              nohup java -Xms32m -Xmx128m -jar $QUARKUS_RUNNER > app.log 2>&1 &
+              nohup java -Xms32m -Xmx128m -jar $MAIN_JAR > app.log 2>&1 &
               echo $! > app.pid
               echo "$APP_NAME iniciado com PID $(cat app.pid)"
               ;;
@@ -124,7 +139,11 @@ jobs:
       - name: Definir nome do arquivo JAR
         id: jar_name
         run: |
-          JAR_FILE=$(find ./target -name "*-runner.jar" | head -1)
+          JAR_FILE=$(find ./target -name "*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "Erro: Nenhum arquivo JAR encontrado!"
+            exit 1
+          fi
           JAR_NAME=$(basename "$JAR_FILE" .jar)
           echo "::set-output name=jar_name::$JAR_NAME"
           echo "jar_name=$JAR_NAME" >> $GITHUB_OUTPUT
