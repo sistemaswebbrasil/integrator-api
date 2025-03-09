@@ -108,7 +108,7 @@ public class UserManagementController {
         } catch (APIException e) {
             log.error("Erro ao criar usuário: {}", e.getMessage(), e);
             return ResponseEntity.status(e.getStatusCode() >= 400 && e.getStatusCode() < 500 ? 
-                    e.getStatusCode() : HttpStatus.INTERNAL_SERVER_ERROR).build();
+                    HttpStatus.valueOf(e.getStatusCode()) : HttpStatus.INTERNAL_SERVER_ERROR).build();
         } catch (Auth0Exception e) {
             log.error("Erro ao criar usuário", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
