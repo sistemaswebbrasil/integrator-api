@@ -12,6 +12,28 @@
             </div>
 
             <div class="col-md-8 offset-md-2">
+
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title"><i class="bi bi-cpu"></i> Monitoramento do Sistema</h2>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4>Uso de Memória</h4>
+                                <div class="progress mb-3">
+                                    <div id="memory-bar" class="progress-bar" role="progressbar" style="width: 0%;" 
+                                         aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                </div>
+                                <div id="memory-details" class="small">
+                                    Carregando informações de memória...
+                                </div>
+                                <button id="refresh-memory" class="btn btn-sm btn-outline-primary mt-2">
+                                    <i class="bi bi-arrow-clockwise"></i> Atualizar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card mb-4 shadow-sm">
                     <div class="card-body">
                         <h2 class="card-title"><i class="bi bi-info-circle"></i> Sobre o Projeto</h2>
@@ -100,5 +122,48 @@
     </main>
 
     <footer th:replace="~{fragments/template :: footer}"></footer>
+
+    <script>
+        function fetchMemoryInfo() {
+            fetch('/integrator-api/api/system/memory')
+                .then(response => response.json())
+                .then(data => {
+                    const memoryBar = document.getElementById('memory-bar');
+                    const memoryDetails = document.getElementById('memory-details');
+                    
+                    // Atualizar barra de progresso
+                    const percentage = data.usagePercentage;
+                    memoryBar.style.width = percentage + '%';
+                    memoryBar.setAttribute('aria-valuenow', percentage);
+                    memoryBar.textContent = percentage + '%';
+                    
+                    // Definir classe de cor baseada no percentual
+                    memoryBar.className = 'progress-bar';
+                    if (percentage > 85) {
+                        memoryBar.classList.add('bg-danger');
+                    } else if (percentage > 70) {
+                        memoryBar.classList.add('bg-warning');
+                    } else {
+                        memoryBar.classList.add('bg-success');
+                    }
+                    
+                    // Atualizar detalhes
+                    memoryDetails.innerHTML = 
+                        `Memória em uso: ${data.used} MB / ${data.total} MB (Máx: ${data.max} MB)<br>` +
+                        `Memória livre: ${data.free} MB | Última atualização: ${new Date().toLocaleTimeString()}`;
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar informações de memória:', error);
+                    document.getElementById('memory-details').textContent = 
+                        'Erro ao buscar informações de memória. Por favor, tente novamente.';
+                });
+        }
+        
+        // Carregar informações quando a página carregar
+        document.addEventListener('DOMContentLoaded', fetchMemoryInfo);
+        
+        // Adicionar evento ao botão de atualização
+        document.getElementById('refresh-memory').addEventListener('click', fetchMemoryInfo);
+    </script>    
 </body>
 </html>
