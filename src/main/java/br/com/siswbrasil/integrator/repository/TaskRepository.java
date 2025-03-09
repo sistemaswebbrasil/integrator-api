@@ -1,11 +1,13 @@
 package br.com.siswbrasil.integrator.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
 import br.com.siswbrasil.integrator.entity.Task;
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
 
-@Repository
-public interface TaskRepository extends JpaRepository<Task, Long> {
+@ApplicationScoped
+public class TaskRepository implements PanacheRepository<Task> {        
+    
+    public Task findByTitle(String title) {
+        return find("title", title).firstResult();
+    }
 }
-
