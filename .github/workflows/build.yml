@@ -1,4 +1,4 @@
-name: Maven Deploy
+name: Quarkus Deploy
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     
     outputs:
-      jar_name: ${{ steps.set_jar_name.outputs.jar_name }}
+      jar_name: ${{ steps.jar_name.outputs.jar_name }}
     
     steps:
       - uses: actions/checkout@v2
@@ -21,37 +21,130 @@ jobs:
           java-version: '21'
           distribution: 'adopt'
       
-      - name: Build com Maven
+      - name: Build com Maven (pular testes)
         env:
-          SPRING_PROFILES_ACTIVE: test
-        run: mvn -B package --file pom.xml
+          QUARKUS_PROFILE: prod
+        run: mvn -B package -DskipTests --file pom.xml
       
       - name: Criando o diretório para o Build do JAR
-        run: mkdir ./jar-upload
+        run: mkdir -p ./jar-upload
       
       - name: Copiando JAR gerado para a pasta jar-upload
-        run: cp ./target/*.jar ./jar-upload
+        run: |
+          cp ./target/*-runner.jar ./jar-upload/
+          cp -r ./target/lib ./jar-upload/ || true
+          cp -r ./target/quarkus-app ./jar-upload/ || true
       
-      - name: Definir nome do arquivo JAR sem extensão
+      - name: Criar application.properties para produção
+        run: |
+          cat > ./jar-upload/application.properties << 'EOF'
+          # Configurações de banco de dados
+          quarkus.datasource.db-kind=mysql
+          quarkus.datasource.username=${{ secrets.DB_USERNAME }}
+          quarkus.datasource.password=${{ secrets.DB_PASSWORD }}
+          quarkus.datasource.jdbc.url=jdbc:mysql://localhost:3306/${{ secrets.DB_NAME }}
+          
+          # Configurações do Hibernate
+          quarkus.hibernate-orm.database.generation=validate
+          quarkus.hibernate-orm.log.sql=false
+          quarkus.hibernate-orm.jdbc.statement-batch-size=5
+          
+          # Flyway
+          quarkus.flyway.migrate-at-start=true
+          quarkus.flyway.locations=classpath:db/migration
+          
+          # Configurações de memória e desempenho
+          quarkus.http.limits.max-body-size=1M
+          quarkus.thread-pool.core-threads=2
+          quarkus.thread-pool.max-threads=5
+          quarkus.http.idle-timeout=10s
+          
+          # Configurações do OpenAPI/Swagger
+          quarkus.swagger-ui.path=/swagger-ui.html
+          quarkus.swagger-ui.always-include=true
+          
+          # Configuração adicional de memória
+          quarkus.native.native-image-xmx=128m
+          EOF
+      
+      - name: Criar script de inicialização
+        run: |
+          cat > ./jar-upload/start.sh << 'EOF'
+          #!/bin/bash
+          
+          APP_NAME="integrator-quarkus"
+          QUARKUS_RUNNER=$(find . -name "*-runner.jar" | head -1)
+          
+          case "$1" in
+            start)
+              echo "Iniciando $APP_NAME..."
+              nohup java -Xms32m -Xmx128m -jar $QUARKUS_RUNNER > app.log 2>&1 &
+              echo $! > app.pid
+              echo "$APP_NAME iniciado com PID $(cat app.pid)"
+              ;;
+            stop)
+              if [ -f app.pid ]; then
+                PID=$(cat app.pid)
+                echo "Parando $APP_NAME (PID: $PID)..."
+                kill $PID
+                rm app.pid
+                echo "$APP_NAME parado"
+              else
+                echo "$APP_NAME não está em execução"
+              fi
+              ;;
+            restart)
+              $0 stop
+              sleep 2
+              $0 start
+              ;;
+            status)
+              if [ -f app.pid ]; then
+                PID=$(cat app.pid)
+                if ps -p $PID > /dev/null; then
+                  echo "$APP_NAME está em execução (PID: $PID)"
+                else
+                  echo "$APP_NAME estava em execução, mas o processo morreu"
+                  rm app.pid
+                fi
+              else
+                echo "$APP_NAME não está em execução"
+              fi
+              ;;
+            *)
+              echo "Uso: $0 {start|stop|restart|status}"
+              exit 1
+          esac
+          
+          exit 0
+          EOF
+          
+          chmod +x ./jar-upload/start.sh
+      
+      - name: Definir nome do arquivo JAR
         id: jar_name
-        run: echo "::set-output name=jar_name::$(basename $(ls ./jar-upload/*.jar) .jar)"
+        run: |
+          JAR_FILE=$(find ./target -name "*-runner.jar" | head -1)
+          JAR_NAME=$(basename "$JAR_FILE" .jar)
+          echo "::set-output name=jar_name::$JAR_NAME"
+          echo "jar_name=$JAR_NAME" >> $GITHUB_OUTPUT
       
       - name: Usar o nome do JAR em outra etapa
         run: echo "O nome do arquivo JAR é ${{ steps.jar_name.outputs.jar_name }}"
       
-      - name: Enviando os JAR por FTP
+      - name: Enviando os arquivos por FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.HOST }}
           username: ${{ secrets.USUARIOCPANEL }}
           password: ${{ secrets.SENHACPANEL }}
           local-dir: ./jar-upload/
-          server-dir: ~/appservers/standalone/
+          server-dir: ~/appservers/quarkus/
       
       - name: Instalar o SSH Client
         run: sudo apt-get install openssh-client sshpass expect
       
-      - name: Parar o Spring Boot
+      - name: Parar a aplicação Quarkus
         env:
           USUARIOCPANEL: ${{ secrets.USUARIOCPANEL }}
           HOST: ${{ secrets.HOST }}
@@ -63,12 +156,12 @@ jobs:
           expect \"password:\"
           send \"$SENHACPANEL\r\"
           expect \"$ \"
-          send \"bash appservers/tmp/${{ steps.jar_name.outputs.jar_name }}.sh stop\r\"
+          send \"cd ~/appservers/quarkus && bash start.sh stop\r\"
           expect \"$ \"
           send \"exit\r\"
           expect eof"
       
-      - name: Iniciar o Spring Boot
+      - name: Iniciar a aplicação Quarkus
         env:
           USUARIOCPANEL: ${{ secrets.USUARIOCPANEL }}
           HOST: ${{ secrets.HOST }}
@@ -80,7 +173,7 @@ jobs:
           expect \"password:\"
           send \"$SENHACPANEL\r\"
           expect \"$ \"
-          send \"bash appservers/tmp/${{ steps.jar_name.outputs.jar_name }}.sh start\r\"
+          send \"cd ~/appservers/quarkus && bash start.sh start\r\"
           expect \"$ \"
           send \"exit\r\"
           expect eof"
